@@ -1,5 +1,11 @@
 # IntuneManager
 
+
+<img width="1361" height="862" alt="image" src="https://github.com/user-attachments/assets/df691829-53ce-4492-948a-eea660a0a1f3" />
+
+
+
+
 Back up, migrate, compare, copy and document **Microsoft Intune** and **Entra ID** configuration — with a modern desktop app and a PowerShell module for automation.
 
 It is a ground-up rebuild inspired by [IntuneManagement](https://github.com/Micke-K/IntuneManagement) by Mikael Karlsson, and it reads that tool's exports, so existing backups keep working.
