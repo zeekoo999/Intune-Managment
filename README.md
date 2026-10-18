@@ -1,141 +1,208 @@
+<div align="center">
+
+<img src="docs/icon.png" width="96" alt="IntuneManager icon">
+
 # IntuneManager
 
+**Back up, migrate, compare and document Microsoft Intune and Entra ID configuration.**
+A modern desktop app for admins, and a PowerShell module for automation.
 
-<img width="1361" height="862" alt="image" src="https://github.com/user-attachments/assets/df691829-53ce-4492-948a-eea660a0a1f3" />
+![PowerShell 7.2+](https://img.shields.io/badge/PowerShell-7.2%2B-5391FE?logo=powershell&logoColor=white)
+![Platform](https://img.shields.io/badge/app-Windows-0078D4?logo=windows&logoColor=white)
+![Cmdlets](https://img.shields.io/badge/cmdlets-Windows%20%7C%20macOS%20%7C%20Linux-6E6E6E)
+![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-beta%20%7C%20v1.0-7C74FF)
+![License: MIT](https://img.shields.io/badge/license-MIT-3FB27F)
 
+[Quick start](#quick-start) · [Connecting](#connecting) · [Export](#export) · [Import](#import) · [Automation](#automation) · [Troubleshooting](#troubleshooting)
 
+</div>
 
+---
 
-Back up, migrate, compare, copy and document **Microsoft Intune** and **Entra ID** configuration — with a modern desktop app and a PowerShell module for automation.
+## Why IntuneManager?
 
-It is a ground-up rebuild inspired by [IntuneManagement](https://github.com/Micke-K/IntuneManagement) by Mikael Karlsson, and it reads that tool's exports, so existing backups keep working.
+Intune holds hundreds of policies, profiles, apps and assignments, and the admin center offers no full backup, no tenant-to-tenant migration and no drift report. IntuneManager does all three.
 
-## What is different
+- **Back up** an entire tenant to plain JSON files you can keep in Git.
+- **Migrate** configuration between tenants (test → production, or after a merger), with groups, filters, scope tags and other references re-pointed automatically.
+- **Compare** a baseline against the live tenant to see what changed.
+- **Document** settings and assignments as HTML, Word, Markdown, CSV or JSON.
 
-| | IntuneManagement | IntuneManager |
-|---|---|---|
-| Sign-in | MSAL DLLs, interactive sign-in, consent prompts | App registration with **certificate or secret**, pure REST, nothing to install |
-| Setting up an app | Manual app registration and permissions | **Setup assistant** creates the app, adds permissions, grants consent, creates the certificate and saves the profile |
-| Entering connection details | Settings dialog | **Paste from Entra** fills the IDs from the app's Overview page; live hints catch common mistakes (e.g. Secret ID pasted instead of Secret Value) |
-| Errors from Entra | Raw `AADSTS…` text | Plain-language fix for the common `AADSTS` codes |
-| UI | Classic WPF; work runs on the UI thread | Dark/light Fluent-style UI; all Graph work runs in background runspaces, so the window never freezes; Cancel button |
-| Throttling / outages | Limited retry | Retries 429/5xx with `Retry-After`, exponential backoff and jitter; token refresh on 401; POST never blindly retried (no duplicates) |
-| Export speed | One request per object, one per group | Full objects read with `$batch` (20 per call); groups for the migration table read in one batched pass |
-| Import safety | Imports directly | **Preview (dry run)**, per-file validation, conflict handling (Skip / Update / Rename / Replace / Duplicate), Conditional Access imported **Off** by default |
-| Failure handling | A failure can stop or leave you guessing | Every object reported; one failure never stops the run; **Retry failed** re-imports only what failed |
-| Logging | Text log | Text log **and** structured JSONL, rotation and retention, Graph `request-id`/`client-request-id` on every error, JSON + CSV report for every operation |
-| Data fidelity | `ConvertFrom-Json` turns date strings into `DateTime` on PS7 | Custom parser keeps every value byte-for-byte |
+It is a ground-up rebuild inspired by [IntuneManagement](https://github.com/Micke-K/IntuneManagement) by Mikael Karlsson, and it reads that tool's export folders, so existing backups keep working.
 
-## Requirements
+## Highlights
 
-- Windows 10/11 or Windows Server with **PowerShell 7.2+** ([install](https://aka.ms/powershell)) for the desktop app.
-- The cmdlets also run on macOS and Linux (PowerShell 7.2+). Saved secrets need Windows (DPAPI); elsewhere use a certificate or the `IM_CLIENT_SECRET` environment variable.
+| | |
+|---|---|
+| 🔑 **Easy connection** | A setup assistant creates the app registration, permissions, admin consent and certificate for you. Or paste the app's Overview page and the IDs fill themselves in. |
+| 🖥️ **Modern UI** | Dark and light themes. Every Graph call runs in the background, so the window never freezes, and long operations can be cancelled. |
+| 👀 **Preview before import** | A dry run validates every file, resolves groups and dependencies, and shows exactly what would be created, updated or skipped. Nothing is changed. |
+| 🔁 **Resilient** | Throttling and server errors are retried with backoff. Create requests are never blindly repeated, so retries can't make duplicates. One failed object never stops the run, and **Retry failed** re-runs only the failures. |
+| 🧾 **Logs you can act on** | Text and structured JSON logs, plus a JSON/CSV report for every operation. Every Graph error records its `request-id` for Microsoft support. |
+| ⚡ **Fast** | Objects and groups are read 20 at a time with Graph `$batch`. |
+| 🛡️ **Safe defaults** | Conditional Access imports as *Off*. Deleting and replacing require typing a confirmation word. Built-in objects are protected. |
+| 📦 **Nothing to install** | No MSAL DLLs or Graph SDK. Plain PowerShell 7 and REST. |
 
-## Start
+<!-- Add a screenshot of the main window here, for example: ![Main window](docs/screenshot.png) -->
 
-1. Download and extract the folder.
+## Quick start
+
+**Requirements:** Windows 10/11 or Windows Server with [PowerShell 7.2 or later](https://aka.ms/powershell). The cmdlets also run on macOS and Linux.
+
+1. Download the latest release (or clone the repo) and extract it.
 2. Double-click **`Start-IntuneManager.cmd`**.
+3. Click **Connect**, then follow [Connecting](#connecting).
 
-Files downloaded from the internet are unblocked automatically on start.
+Windows marks downloaded files as blocked; the launcher unblocks them automatically.
 
-## Connect
+```powershell
+git clone https://github.com/YOUR-USERNAME/IntuneManager.git
+cd IntuneManager
+.\Start-IntuneManager.cmd
+```
 
-### Option A — let the assistant create the app (about a minute)
+## Connecting
 
-1. Click **Connect** → **Create one for me**.
-2. Choose *Certificate (recommended)* or *Client secret*, then **Start**.
-3. Click **Copy code and open sign-in page**, paste the code and sign in with a Global Administrator, Privileged Role Administrator or Cloud Application Administrator.
-4. The assistant creates the app registration, adds the Graph application permissions, grants admin consent, creates the certificate in *CurrentUser\My* (or a 12-month secret), waits for Entra ID to replicate, and saves a connection profile. Click **Connect now**.
+IntuneManager signs in as an **app registration** with a certificate or client secret (app-only access). There are two ways to set one up.
 
-The admin sign-in is used only once, for setup. Day-to-day use is app-only.
+### Option A: let the assistant create the app (about a minute)
 
-### Option B — use an existing app registration
+1. **Connect** → **Create one for me**.
+2. Choose **Certificate** (recommended) or **Client secret**, then **Start**.
+3. Click **Copy code and open sign-in page**, paste the code and sign in as a Global Administrator, Privileged Role Administrator or Cloud Application Administrator.
+4. The assistant then:
+   - creates the app registration,
+   - adds the Microsoft Graph permissions and grants admin consent,
+   - creates a certificate in your personal store (or a 12-month secret),
+   - waits for Entra ID to replicate, and saves a connection profile.
+5. Click **Connect now**.
 
-1. Click **Connect** → **I have an app registration**.
-2. Open the app's **Overview** page in the Entra admin center, select everything (Ctrl+A, Ctrl+C) and click **Paste from Entra**. The client ID, tenant ID and name are filled in.
-3. Pick the certificate from the list (or a `.pfx`), or paste the **secret value**.
-4. **Test** shows which permissions are granted and which are missing. **Save and connect**.
+The admin sign-in is used only for this one-time setup.
 
-Profiles are stored in `%APPDATA%\IntuneManager\profiles.json`. Secrets are encrypted with DPAPI for your Windows account and never written in clear text. The last used profile reconnects automatically on start.
+### Option B: use an existing app registration
 
-### Permissions (Microsoft Graph, application)
+1. **Connect** → **I have an app registration**.
+2. In the Entra admin center, open the app's **Overview** page, press Ctrl+A, Ctrl+C, and click **Paste from Entra**. The client ID, tenant ID and name fill in.
+3. Pick the certificate (or a `.pfx` file), or paste the **secret value**.
+4. **Test** shows which permissions are granted and which are missing. Then **Save and connect**.
+
+The form warns about common mistakes as you type, such as pasting the Secret ID instead of the Secret Value. Sign-in errors are shown as plain-language fixes instead of raw `AADSTS` codes.
+
+Profiles are saved in `%APPDATA%\IntuneManager\profiles.json`. Secrets are encrypted with Windows DPAPI for your user account and are never stored in clear text. The last used profile reconnects on start.
+
+<details>
+<summary><b>Required Microsoft Graph permissions</b> (application)</summary>
 
 | Permission | Used for |
 |---|---|
-| DeviceManagementConfiguration.ReadWrite.All | Configuration, compliance, settings catalog, endpoint security, updates, filters |
-| DeviceManagementApps.ReadWrite.All | Apps, app protection, app configuration, branding |
-| DeviceManagementServiceConfig.ReadWrite.All | Enrollment, Autopilot, terms and conditions, notifications |
-| DeviceManagementRBAC.ReadWrite.All | Scope tags, roles |
-| DeviceManagementScripts.ReadWrite.All | PowerShell, shell, remediation and compliance scripts |
-| DeviceManagementManagedDevices.Read.All | Device categories |
-| Group.ReadWrite.All | Reading assignment groups; creating missing groups on import |
-| Organization.Read.All | Tenant name |
-| *Optional:* Policy.Read.All, Policy.ReadWrite.ConditionalAccess, Application.Read.All, Agreement.ReadWrite.All, Organization.ReadWrite.All, CloudPC.ReadWrite.All, User.Read.All | Conditional Access, named locations, authentication strengths, terms of use, company branding, Windows 365 |
+| `DeviceManagementConfiguration.ReadWrite.All` | Configuration, compliance, settings catalog, endpoint security, updates, filters |
+| `DeviceManagementApps.ReadWrite.All` | Apps, app protection, app configuration, branding |
+| `DeviceManagementServiceConfig.ReadWrite.All` | Enrollment, Autopilot, terms and conditions, notifications |
+| `DeviceManagementRBAC.ReadWrite.All` | Scope tags, Intune roles |
+| `DeviceManagementScripts.ReadWrite.All` | PowerShell, shell, remediation and compliance scripts |
+| `DeviceManagementManagedDevices.Read.All` | Device categories |
+| `Group.ReadWrite.All` | Reading assignment groups; creating missing groups on import |
+| `Organization.Read.All` | Tenant name |
 
-Use read-only variants (`*.Read.All`) if the app should only export, compare and document.
+**Optional:** `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess`, `Application.Read.All`, `Agreement.ReadWrite.All`, `Organization.ReadWrite.All`, `CloudPC.ReadWrite.All`, `User.Read.All` for Conditional Access, named locations, authentication strengths, terms of use, company branding and Windows 365.
+
+For an app that should only export, compare and document, use the read-only (`*.Read.All`) variants.
+
+</details>
+
+## How it works
+
+```mermaid
+flowchart LR
+    subgraph Source tenant
+        A[Intune & Entra ID]
+    end
+    subgraph Export folder
+        M[manifest.json]
+        T[MigrationTable.json<br/>+ Groups/*.json]
+        O["ObjectType folders/*.json"]
+    end
+    subgraph Target tenant
+        B[Intune & Entra ID]
+    end
+    A -- "Export<br/>(batched reads)" --> O
+    A --> T
+    A --> M
+    O -- "Validate → Preview → Import" --> B
+    T -- "map groups, filters,<br/>scope tags, apps" --> B
+```
+
+Each object is one JSON file, with its assignments included. The migration table records which groups and users the assignments point to, so the import can find (or create) the matching groups in another tenant.
 
 ## Export
 
-**Export** (Home or toolbar, Ctrl+E) → choose a folder and object types, or the objects selected in the grid.
+**Export** from the Home page or the toolbar (Ctrl+E). Choose a folder and the object types, or export only the objects selected in the grid.
 
 ```
 <folder>\<Tenant>\<yyyy-MM-dd_HHmm>\
-  manifest.json          tool, tenant, counts, SHA-256 of every file
-  MigrationTable.json    groups/users referenced by assignments
-  Groups\*.json          group definitions (incl. dynamic rules) to recreate groups
-  <ObjectType>\<name>.json   one file per object, assignments included
-  <ObjectType>\<name>.ps1    scripts saved as readable files too
-  _Reports\Export_*.json/.csv
+├── manifest.json            tool, tenant, counts, SHA-256 of every file
+├── MigrationTable.json      groups and users referenced by assignments
+├── Groups\*.json            group definitions (incl. dynamic rules)
+├── <ObjectType>\<name>.json one file per object, assignments included
+├── <ObjectType>\<name>.ps1  scripts also saved as readable files
+└── _Reports\Export_*.json / .csv
 ```
+
+Date strings and every other value are preserved exactly, so exports diff cleanly in Git.
 
 ## Import
 
-**Import** (Ctrl+I) → choose an export folder → **Load**.
+**Import** (Ctrl+I), choose an export folder, then **Load**.
 
-1. Every file is parsed and validated. Invalid files are flagged, not fatal. Files edited after export are marked.
-2. Untick what you don't want. Objects are ordered by dependency (scope tags → filters → … → apps → policies → Conditional Access → policy sets).
-3. **Preview (no changes)** resolves groups and dependencies and shows *Will create / Will update / Skipped* per object, plus groups that would be created.
-4. **Import**. Each row shows its result; **Retry failed** re-runs only the failures; **Open report** opens the CSV.
+1. **Validate.** Every file is checked. Invalid files are flagged, not fatal, and files edited after export are marked.
+2. **Select.** Untick what you don't want. Objects are imported in dependency order (scope tags → filters → … → apps → policies → Conditional Access → policy sets).
+3. **Preview (no changes).** Shows *Will create / Will update / Skipped* per object, and which groups would be created.
+4. **Import.** Each row shows its result. **Retry failed** re-runs only the failures; **Open report** opens the CSV.
 
-Between tenants, references are mapped automatically: groups (by name, created if missing from `Groups\*.json`), users (by UPN), scope tags, assignment filters, apps (app configuration, ESP, policy sets, dependencies/supersedence), named locations, authentication strengths, reusable settings and custom ADMX definitions. Within the same tenant, ids are kept.
+**Between tenants**, references are mapped automatically: groups (by name; missing ones are created from `Groups\*.json`), users (by UPN), scope tags, assignment filters, apps (app configuration, ESP, policy sets, dependencies and supersedence), named locations, authentication strengths, reusable settings and custom ADMX definitions. **Within the same tenant**, IDs are kept.
 
-| When an object with the same name exists | |
+| When an object with the same name already exists | |
 |---|---|
-| Skip it *(default)* | Keep it; its id is still used for references |
-| Update it | Overwrite settings and replace assignments |
-| Import a renamed copy | Add a suffix, e.g. "(Imported)" |
-| Delete and recreate | Requires typing REPLACE |
-| Import anyway | Duplicate |
+| **Skip it** (default) | Keep it; its ID is still used for references from other imported objects |
+| **Update it** | Overwrite its settings and replace its assignments |
+| **Import a renamed copy** | Add a suffix such as "(Imported)" |
+| **Delete and recreate** | Requires typing `REPLACE` |
+| **Import anyway** | Create a duplicate |
 
-## Compare, copy, delete, document
+## Compare, copy, delete and document
 
-- **Compare**: baseline export vs the live tenant, or export vs export. Settings are matched by setting id (not position) and assignments by group name, so cross-tenant comparisons are meaningful. Save as HTML or CSV.
-- **Copy**: duplicate an object in the tenant under a new name.
-- **Delete**: requires typing DELETE; built-in and default objects are protected.
-- **Document**: HTML (searchable, dark/light), Word (.docx, no Office needed), Markdown, CSV or JSON. Settings catalog and endpoint security setting names are resolved when connected.
+- **Compare** a baseline export with the live tenant, or two exports. Settings are matched by setting ID (not position) and assignments by group name, so cross-tenant comparisons are meaningful. Save the result as HTML or CSV.
+- **Copy** an object within the tenant under a new name.
+- **Delete** selected objects. Requires typing `DELETE`; built-in and default objects are protected.
+- **Document** as searchable HTML, Word (`.docx`, no Office needed), Markdown, CSV or JSON. Settings catalog and endpoint security names are resolved when connected.
 
 ## Logs and reports
 
-- Activity log panel in the app (filter by warnings/errors, copy lines).
-- Files in `%APPDATA%\IntuneManager\Logs` (configurable):
-  - `IntuneManager_yyyyMMdd.log` — readable text
-  - `IntuneManager_yyyyMMdd.jsonl` — one JSON entry per line (time, level, category, operation id, error type, HTTP status, Graph error code, `request-id`, `client-request-id`)
-  - `Reports\*.json/.csv` — every object of every operation with action, status, source/target id and request id
-- Daily files, 20 MB rollover, retention (default 30 days).
+Everything is logged to `%APPDATA%\IntuneManager\Logs` (configurable in Settings) and to the activity panel in the app.
 
-## Automation (cmdlets)
+| File | Contents |
+|---|---|
+| `IntuneManager_yyyyMMdd.log` | Readable text log |
+| `IntuneManager_yyyyMMdd.jsonl` | One JSON entry per line: time, level, area, operation ID, HTTP status, Graph error code, `request-id`, `client-request-id` |
+| `Reports\*.json` / `.csv` | Every object of every operation: action, status, source and target ID, request ID |
+
+Files roll over daily and at 20 MB, and are kept for 30 days by default.
+
+## Automation
+
+All features are available as cmdlets, for scheduled backups and pipelines.
 
 ```powershell
 Import-Module .\IntuneManager.psd1
 
-# Connect with a saved profile, or directly
+# Connect with a saved profile, or directly with a certificate
 Connect-IMTenant -ProfileName 'Contoso PROD'
 Connect-IMTenant -TenantId contoso.onmicrosoft.com -ClientId <app-id> -CertificateThumbprint <thumbprint>
 
-# Nightly backup of everything the app may read
+# Nightly backup of everything the app is allowed to read
 Initialize-IMLogging -Directory D:\IntuneBackup\Logs
-$r = Export-IMObjects -Path D:\IntuneBackup
-if ($r.Failed) { exit 1 }
+$result = Export-IMObjects -Path D:\IntuneBackup
+if ($result.Failed) { exit 1 }
 
 # Preview, then import into another tenant
 Connect-IMTenant -ProfileName 'Fabrikam TEST'
@@ -150,42 +217,80 @@ Compare-IMObjects -ReferencePath <baseline export> | Where-Object Status -ne 'Id
 New-IMDocumentation -Live -Format Word -OutputPath D:\Docs
 ```
 
-`Get-Command -Module IntuneManager` lists all commands; `Get-Help <command> -Full` shows parameters and examples.
+`Get-Command -Module IntuneManager` lists all commands, and `Get-Help <command> -Full` shows their parameters and examples. On macOS and Linux, use a certificate or set the `IM_CLIENT_SECRET` environment variable, since saved secrets need Windows DPAPI.
 
-## Object types
+<details>
+<summary><b>Supported object types</b></summary>
 
-Configuration profiles, Settings catalog (incl. settings-catalog endpoint security and baselines), Administrative templates (incl. custom ADMX), imported ADMX files, BIOS configurations, Properties catalog, device categories, Windows 365 provisioning and user settings · Compliance policies (classic and settings catalog), compliance scripts, notification templates · Endpoint security (template-based), reusable settings · PowerShell scripts, macOS shell scripts, macOS custom attributes, Remediations · Update rings, feature, quality and driver updates · Autopilot, enrollment status page, enrollment restrictions, co-management, Apple enrollment types, ADE profiles · Apps (with dependencies/supersedence and Win32 content), app protection, app configuration (managed apps/devices), Android OEMConfig, policy sets · Scope tags, assignment filters, Intune roles (with role assignments), terms and conditions, Company Portal branding · Conditional Access, named locations, authentication strengths and contexts, terms of use, company branding.
+| Area | Object types |
+|---|---|
+| Device configuration | Configuration profiles, Settings catalog (incl. settings-catalog endpoint security and baselines), Administrative templates (incl. custom ADMX), imported ADMX files, BIOS configurations, Properties catalog, device categories, Windows 365 provisioning and user settings |
+| Compliance | Compliance policies (classic and settings catalog), compliance scripts, notification templates |
+| Endpoint security | Template-based policies, reusable settings |
+| Scripts | PowerShell scripts, macOS shell scripts, macOS custom attributes, Remediations |
+| Windows updates | Update rings, feature updates, quality updates, driver updates |
+| Enrollment | Autopilot profiles, enrollment status page, enrollment restrictions, co-management, Apple enrollment types, ADE profiles |
+| Apps | Apps (with dependencies, supersedence and Win32 content), app protection, app configuration (managed apps and devices), Android OEMConfig, policy sets |
+| Tenant administration | Scope tags, assignment filters, Intune roles (with role assignments), terms and conditions, Company Portal branding |
+| Entra ID | Conditional Access, named locations, authentication strengths and contexts, terms of use, company branding |
 
-## Known limits
+</details>
 
-- **Win32 app content**: Intune never returns content encryption keys. Content is uploaded on import when the `.intunewin` is next to the export file. Content can be exported only for apps uploaded with this tool (it keeps the keys).
-- **Store/VPP apps** are synced from a token or store and cannot be created through Graph; they are skipped with a reason.
-- **Encrypted OMA-URI values** are decrypted at export when possible; values that cannot be decrypted won't work in another tenant.
-- **Template-based endpoint security** policies whose template Microsoft has retired cannot be created any more; recreate them as Settings catalog policies.
+## Known limitations
+
+- **Win32 app content.** Intune never returns content encryption keys. On import, content is uploaded when the `.intunewin` sits next to the export file. Content can only be *exported* for apps that were uploaded with this tool, which keeps the keys.
+- **Store and VPP apps** are synced from a store or token and can't be created through Graph. They are skipped with a reason.
+- **Encrypted OMA-URI values** are decrypted at export where Graph allows it; values that can't be decrypted won't work in another tenant.
+- **Retired endpoint security templates** can no longer be created. Recreate those policies as Settings catalog policies.
 - **Conditional Access** imports as *Off* unless you choose otherwise. Users that don't exist in the target are removed from the policy and reported.
 
 ## Troubleshooting
 
 | Message | Fix |
 |---|---|
-| The client secret is not valid (AADSTS7000215) | Paste the secret **Value**, not the Secret ID |
-| The client secret has expired (AADSTS7000222) | Create a new secret and edit the profile |
-| The app (client) ID was not found (AADSTS700016) | Wrong client ID/tenant, or the app is in another tenant |
-| The certificate was rejected (AADSTS700027) | Upload the certificate's public key (.cer) to the app |
-| Access denied (403) for an object type | Add the permission shown and grant admin consent; the home page lists what's missing |
+| The client secret is not valid (`AADSTS7000215`) | Paste the secret **Value**, not the Secret ID |
+| The client secret has expired (`AADSTS7000222`) | Create a new secret and edit the profile |
+| The app (client) ID was not found (`AADSTS700016`) | Wrong client ID or tenant, or the app lives in another tenant |
+| The certificate was rejected (`AADSTS700027`) | Upload the certificate's public key (`.cer`) to the app registration |
+| Access denied (403) for an object type | Add the permission shown and grant admin consent; the Home page lists what's missing |
 | Throttled (429) after retries | Raise *Retries* in Settings or run again later; the report shows what to retry |
 
-Send the `request-id` from the log or report to Microsoft support for Graph errors.
+For Graph errors, send the `request-id` from the log or report to Microsoft support.
 
-## Tests
+## Project structure
 
-```powershell
-pwsh -File .\Tests\Run-Tests.ps1      # engine: export, import, mapping, conflicts, retries, logging, compare, docs
-pwsh -File .\Tests\Run-JobTests.ps1   # background job infrastructure used by the app
+```
+IntuneManager/
+├── Start-IntuneManager.cmd   double-click launcher
+├── IntuneManager.psd1/.psm1  module
+├── Core/                     engine: auth, Graph client, object types, export, import, compare, docs, logging
+├── UI/                       WPF app: theme, main window, panels
+└── Tests/                    offline tests against a simulated Graph tenant
 ```
 
-The tests run against an in-memory simulated Graph tenant (including injected throttling and errors); no tenant or network is needed.
+## Running the tests
+
+```powershell
+pwsh -File .\Tests\Run-Tests.ps1      # export, import, ID mapping, conflicts, retries, logging, compare, docs
+pwsh -File .\Tests\Run-JobTests.ps1   # background jobs used by the app
+```
+
+The tests run against an in-memory simulated Graph tenant, including injected throttling and errors. No tenant or network access is needed.
+
+## Contributing
+
+Issues and pull requests are welcome. When reporting a problem, please include:
+
+- the PowerShell version (`$PSVersionTable.PSVersion`) and Windows version,
+- the object type involved,
+- the relevant lines from the `.log` file or operation report, with the `request-id`.
+
+Remove tenant names, IDs and other sensitive values before posting.
+
+> **Use with care.** IntuneManager can create, change and delete configuration in your tenant. Try it against a test tenant first, run **Preview** before every import, and keep an export as a backup.
 
 ## License
 
-MIT. Inspired by and file-compatible with [IntuneManagement](https://github.com/Micke-K/IntuneManagement) (MIT) by Mikael Karlsson.
+[MIT](LICENSE).
+
+Inspired by, and file-compatible with, [IntuneManagement](https://github.com/Micke-K/IntuneManagement) by Mikael Karlsson (MIT). This project is not affiliated with or endorsed by Microsoft.

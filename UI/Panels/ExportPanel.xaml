@@ -1,0 +1,86 @@
+<Border xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog}" Width="760" MaxHeight="700">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <StackPanel>
+                <TextBlock Text="Export" Style="{StaticResource H1}"/>
+                <TextBlock x:Name="ExpSub" Style="{StaticResource Hint}" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button x:Name="ExpClose" Style="{StaticResource SubtleBtn}" HorizontalAlignment="Right" VerticalAlignment="Top" Content="&#xE8BB;" FontFamily="{StaticResource IconFont}" FontSize="10"/>
+        </Grid>
+
+        <StackPanel Grid.Row="1" Margin="0,18,0,0">
+            <TextBlock Text="Export folder" Style="{StaticResource Label}"/>
+            <Grid>
+                <TextBox x:Name="ExpPath" Margin="0,0,92,0"/>
+                <Button x:Name="ExpBrowse" Content="Browse" HorizontalAlignment="Right" Width="84"/>
+            </Grid>
+            <TextBlock x:Name="ExpPathHint" Style="{StaticResource Hint}" Margin="0,4,0,0"/>
+            <TextBlock Text="What to export" Style="{StaticResource Label}" Margin="0,14,0,6"/>
+            <Border Style="{StaticResource SegmentHost}">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="ExpScopeTypes" Content="Object types" Style="{StaticResource Segment}" GroupName="es" IsChecked="True"/>
+                    <RadioButton x:Name="ExpScopeSelected" Content="Selected objects" Style="{StaticResource Segment}" GroupName="es"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid x:Name="ExpTypesPanel">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <Button x:Name="ExpSelAll" Content="Select all" Style="{StaticResource SubtleBtn}"/>
+                    <Button x:Name="ExpSelNone" Content="Select none" Style="{StaticResource SubtleBtn}"/>
+                    <TextBlock x:Name="ExpTypeCount" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{DynamicResource Muted}"/>
+                </StackPanel>
+                <Border Grid.Row="1" Background="{DynamicResource SurfaceAlt}" CornerRadius="8" Padding="8" MinHeight="180">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="ExpTypeList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="4,5" ToolTip="{Binding Description}">
+                                        <TextBlock>
+                                            <Run Text="{Binding Name, Mode=OneWay}"/>
+                                            <Run Text="{Binding Kind, Mode=OneWay}" Foreground="{DynamicResource Muted}" FontSize="11"/>
+                                        </TextBlock>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+            <Border x:Name="ExpSelectedPanel" Background="{DynamicResource SurfaceAlt}" CornerRadius="8" Padding="14" Visibility="Collapsed" VerticalAlignment="Top">
+                <TextBlock x:Name="ExpSelectedText" TextWrapping="Wrap"/>
+            </Border>
+        </Grid>
+
+        <WrapPanel Grid.Row="3" Margin="0,14,0,0">
+            <CheckBox x:Name="ExpAssign" Content="Include assignments" Margin="0,0,22,8" IsChecked="True"/>
+            <CheckBox x:Name="ExpDateFolder" Content="Create tenant\date subfolder" Margin="0,0,22,8" IsChecked="True"/>
+            <CheckBox x:Name="ExpAddId" Content="Add object id to file names" Margin="0,0,22,8"/>
+            <CheckBox x:Name="ExpAppContent" Content="Include app packages when available" Margin="0,0,22,8"/>
+        </WrapPanel>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="ExpCancel" Content="Cancel" Margin="0,0,8,0"/>
+            <Button x:Name="ExpStart" Content="Export" Style="{StaticResource AccentBtn}" Padding="24,8"/>
+        </StackPanel>
+    </Grid>
+</Border>

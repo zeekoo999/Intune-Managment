@@ -1,0 +1,50 @@
+<Border xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog}" Width="660">
+    <StackPanel>
+        <Grid>
+            <StackPanel>
+                <TextBlock Text="Documentation" Style="{StaticResource H1}"/>
+                <TextBlock Text="Readable documentation of settings and assignments. Settings catalog names are resolved when connected." Style="{StaticResource Hint}" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button x:Name="DocClose" Style="{StaticResource SubtleBtn}" HorizontalAlignment="Right" VerticalAlignment="Top" Content="&#xE8BB;" FontFamily="{StaticResource IconFont}" FontSize="10"/>
+        </Grid>
+
+        <TextBlock Text="Source" Style="{StaticResource Label}" Margin="0,18,0,6"/>
+        <Border Style="{StaticResource SegmentHost}">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="DocLive" Content="Connected tenant" Style="{StaticResource Segment}" GroupName="ds" IsChecked="True"/>
+                <RadioButton x:Name="DocExport" Content="Export folder" Style="{StaticResource Segment}" GroupName="ds"/>
+            </StackPanel>
+        </Border>
+        <Grid x:Name="DocPathRow" Margin="0,10,0,0" Visibility="Collapsed">
+            <TextBox x:Name="DocPath" Margin="0,0,92,0"/>
+            <Button x:Name="DocPathBrowse" Content="Browse" HorizontalAlignment="Right" Width="84"/>
+        </Grid>
+        <CheckBox x:Name="DocOnlyType" Content="Only the current object type" Margin="0,12,0,0"/>
+
+        <TextBlock Text="Format" Style="{StaticResource Label}" Margin="0,16,0,6"/>
+        <Border Style="{StaticResource SegmentHost}">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="DocFmtHtml" Content="HTML" Style="{StaticResource Segment}" GroupName="df" IsChecked="True"/>
+                <RadioButton x:Name="DocFmtWord" Content="Word" Style="{StaticResource Segment}" GroupName="df"/>
+                <RadioButton x:Name="DocFmtMarkdown" Content="Markdown" Style="{StaticResource Segment}" GroupName="df"/>
+                <RadioButton x:Name="DocFmtCsv" Content="CSV" Style="{StaticResource Segment}" GroupName="df"/>
+                <RadioButton x:Name="DocFmtJson" Content="JSON" Style="{StaticResource Segment}" GroupName="df"/>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Save to folder" Style="{StaticResource Label}" Margin="0,16,0,4"/>
+        <Grid>
+            <TextBox x:Name="DocOut" Margin="0,0,92,0"/>
+            <Button x:Name="DocOutBrowse" Content="Browse" HorizontalAlignment="Right" Width="84"/>
+        </Grid>
+        <CheckBox x:Name="DocResolve" Content="Resolve setting names (needs connection)" Margin="0,12,0,0" IsChecked="True"/>
+        <CheckBox x:Name="DocOpen" Content="Open when finished" Margin="0,10,0,0" IsChecked="True"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+            <Button x:Name="DocCancel" Content="Cancel" Margin="0,0,8,0"/>
+            <Button x:Name="DocStart" Content="Create documentation" Style="{StaticResource AccentBtn}" Padding="22,8"/>
+        </StackPanel>
+    </StackPanel>
+</Border>

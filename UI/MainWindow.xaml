@@ -1,0 +1,453 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IntuneManager" Width="1360" Height="860" MinWidth="980" MinHeight="620"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource Bg}" Foreground="{DynamicResource Text}"
+        FontFamily="{DynamicResource UiFont}" FontSize="13" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="44" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="44"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="28"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== Title bar ===== -->
+        <Grid Grid.Row="0" Background="{DynamicResource Surface}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Accent}">
+                    <TextBlock Text="&#xE7F4;" Style="{StaticResource Icon}" FontSize="13" Foreground="{DynamicResource AccentText}" HorizontalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="IntuneManager" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Tenant switcher -->
+            <Button x:Name="TenantButton" Grid.Column="2" Style="{StaticResource SubtleBtn}" Margin="0,0,8,0" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Connections">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse x:Name="TenantDot" Width="9" Height="9" Fill="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Margin="9,0,0,0">
+                        <TextBlock x:Name="TenantName" Text="Not connected" FontWeight="SemiBold" FontSize="12.5"/>
+                        <TextBlock x:Name="TenantSub" Text="Click to connect" FontSize="11" Foreground="{DynamicResource Muted}"/>
+                    </StackPanel>
+                    <TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="10" Margin="10,0,0,0" Foreground="{DynamicResource Muted}"/>
+                </StackPanel>
+            </Button>
+
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <Button x:Name="ThemeButton" Style="{StaticResource CaptionBtn}" FontSize="14" Content="&#xE793;" ToolTip="Switch light/dark" WindowChrome.IsHitTestVisibleInChrome="True"/>
+                <Button x:Name="SettingsButton" Style="{StaticResource CaptionBtn}" FontSize="14" Content="&#xE713;" ToolTip="Settings" WindowChrome.IsHitTestVisibleInChrome="True"/>
+                <Rectangle Width="1" Fill="{DynamicResource Line}" Margin="6,10"/>
+                <Button x:Name="MinButton" Style="{StaticResource CaptionBtn}" Content="&#xE921;" WindowChrome.IsHitTestVisibleInChrome="True"/>
+                <Button x:Name="MaxButton" Style="{StaticResource CaptionBtn}" Content="&#xE922;" WindowChrome.IsHitTestVisibleInChrome="True"/>
+                <Button x:Name="CloseButton" Style="{StaticResource CloseBtn}" Content="&#xE8BB;" WindowChrome.IsHitTestVisibleInChrome="True"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ===== Body ===== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="256"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Navigation -->
+            <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Button x:Name="HomeButton" Style="{StaticResource SubtleBtn}" HorizontalContentAlignment="Left" Margin="6,10,6,2" HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Width="210">
+                            <TextBlock Text="&#xE80F;" Style="{StaticResource Icon}"/>
+                            <TextBlock Text="Home" Margin="12,0,0,0" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Grid Grid.Row="1" Margin="12,6,12,6">
+                        <TextBox x:Name="NavFilter" Padding="30,6,8,6" ToolTip="Filter object types"/>
+                        <TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="10,0,0,0" IsHitTestVisible="False"/>
+                    </Grid>
+                    <ListBox x:Name="NavList" Grid.Row="2" Background="Transparent" BorderThickness="0" ItemContainerStyle="{StaticResource NavItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" Padding="0,0,0,10">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <TextBlock x:Name="hdr" Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Muted}" Margin="0,10,0,0" Visibility="Collapsed"/>
+                                    <Grid x:Name="row">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="14" Foreground="{DynamicResource Muted}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,6,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Count}" FontSize="11" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsHeader}" Value="True">
+                                        <Setter TargetName="hdr" Property="Visibility" Value="Visible"/>
+                                        <Setter TargetName="row" Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- Pages -->
+            <Grid Grid.Column="1">
+                <!-- Home -->
+                <ScrollViewer x:Name="HomePage" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="36,30,36,30" MaxWidth="1100">
+                        <!-- Disconnected -->
+                        <StackPanel x:Name="HomeDisconnected">
+                            <TextBlock Text="Welcome" Style="{StaticResource H1}"/>
+                            <TextBlock Text="Back up, migrate, compare and document Microsoft Intune and Entra ID configuration." Style="{StaticResource Hint}" FontSize="14" Margin="0,6,0,24"/>
+                            <Border Style="{StaticResource Card}" Padding="24">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Connect to a tenant" Style="{StaticResource H2}"/>
+                                        <TextBlock Style="{StaticResource Hint}" FontSize="13" Margin="0,6,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                                   Text="Use an app registration with a certificate or client secret. No modules or DLLs to install. Don't have an app yet? The setup assistant creates one with the right permissions in about a minute."/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button x:Name="HomeSetupButton" Content="Set up a new app" Margin="0,0,8,0"/>
+                                        <Button x:Name="HomeConnectButton" Content="Connect" Style="{StaticResource AccentBtn}" Padding="22,8"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="Saved connections" Style="{StaticResource H2}" Margin="0,28,0,10"/>
+                            <ItemsControl x:Name="HomeProfiles">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Tag="{Binding Id}" Width="300" Margin="0,0,12,12" HorizontalContentAlignment="Stretch" Padding="16,12">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Tenant}" Foreground="{DynamicResource Muted}" FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,6,0,0"/>
+                                                <TextBlock Text="{Binding Warning}" Foreground="{DynamicResource Warning}" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock x:Name="HomeNoProfiles" Text="No saved connections yet." Style="{StaticResource Hint}"/>
+                        </StackPanel>
+
+                        <!-- Connected -->
+                        <StackPanel x:Name="HomeConnected" Visibility="Collapsed">
+                            <TextBlock x:Name="HomeTenantTitle" Text="Tenant" Style="{StaticResource H1}"/>
+                            <TextBlock x:Name="HomeTenantSub" Style="{StaticResource Hint}" FontSize="13" Margin="0,4,0,22"/>
+                            <UniformGrid Columns="4" Margin="-6,0">
+                                <Button x:Name="TileExport" Margin="6" Padding="18,16" HorizontalContentAlignment="Stretch">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xEDE1;" Style="{StaticResource Icon}" FontSize="22" Foreground="{DynamicResource Accent}" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="Export" FontWeight="SemiBold" FontSize="15" Margin="0,12,0,2"/>
+                                        <TextBlock Text="Back up everything or selected object types to JSON." Style="{StaticResource Hint}"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="TileImport" Margin="6" Padding="18,16" HorizontalContentAlignment="Stretch">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE8B5;" Style="{StaticResource Icon}" FontSize="22" Foreground="{DynamicResource Accent}" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="Import" FontWeight="SemiBold" FontSize="15" Margin="0,12,0,2"/>
+                                        <TextBlock Text="Preview, then import an export into this tenant." Style="{StaticResource Hint}"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="TileCompare" Margin="6" Padding="18,16" HorizontalContentAlignment="Stretch">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE8EF;" Style="{StaticResource Icon}" FontSize="22" Foreground="{DynamicResource Accent}" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="Compare" FontWeight="SemiBold" FontSize="15" Margin="0,12,0,2"/>
+                                        <TextBlock Text="Find drift against a baseline export or between exports." Style="{StaticResource Hint}"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="TileDocs" Margin="6" Padding="18,16" HorizontalContentAlignment="Stretch">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" FontSize="22" Foreground="{DynamicResource Accent}" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="Document" FontWeight="SemiBold" FontSize="15" Margin="0,12,0,2"/>
+                                        <TextBlock Text="HTML, Word, Markdown or CSV documentation." Style="{StaticResource Hint}"/>
+                                    </StackPanel>
+                                </Button>
+                            </UniformGrid>
+
+                            <Grid Margin="0,22,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="360"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,10">
+                                            <TextBlock Text="Recent operations" Style="{StaticResource H2}"/>
+                                            <Button x:Name="OpenReportsButton" Content="Open reports folder" Style="{StaticResource SubtleBtn}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <DataGrid x:Name="RecentGrid" MaxHeight="300" IsReadOnly="True" SelectionMode="Single">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="When" Binding="{Binding Time}" Width="130"/>
+                                                <DataGridTextColumn Header="Operation" Binding="{Binding Action}" Width="120"/>
+                                                <DataGridTextColumn Header="Result" Binding="{Binding Message}" Width="*"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                        <TextBlock x:Name="RecentEmpty" Text="Nothing yet. Exports and imports you run appear here with their reports." Style="{StaticResource Hint}" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="App permissions" Style="{StaticResource H2}" Margin="0,0,0,10"/>
+                                        <ItemsControl x:Name="PermissionList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,3" ToolTip="{Binding Detail}">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="22"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding AuthType}" Style="{StaticResource Icon}" FontSize="12" Foreground="{Binding Warning}"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Objects page -->
+                <Grid x:Name="ObjectsPage" Visibility="Collapsed" Margin="24,18,24,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.ColumnSpan="2">
+                        <TextBlock x:Name="ObjectsTitle" Text="Objects" Style="{StaticResource H1}"/>
+                        <TextBlock x:Name="ObjectsSub" Style="{StaticResource Hint}" Margin="0,4,0,12"/>
+                    </StackPanel>
+                    <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource Card}" Padding="6" Margin="0,0,0,10">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="ObjRefresh" Style="{StaticResource ToolBtn}" ToolTip="Refresh (F5)">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72C;" Style="{StaticResource Icon}" FontSize="13"/><TextBlock Text="Refresh" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                                <Rectangle Width="1" Fill="{DynamicResource Line}" Margin="4,4"/>
+                                <Button x:Name="ObjExport" Style="{StaticResource ToolBtn}">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEDE1;" Style="{StaticResource Icon}" FontSize="13"/><TextBlock Text="Export" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                                <Button x:Name="ObjImport" Style="{StaticResource ToolBtn}">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B5;" Style="{StaticResource Icon}" FontSize="13"/><TextBlock Text="Import" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                                <Button x:Name="ObjCopy" Style="{StaticResource ToolBtn}">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8C8;" Style="{StaticResource Icon}" FontSize="13"/><TextBlock Text="Copy" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                                <Button x:Name="ObjCompare" Style="{StaticResource ToolBtn}">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8EF;" Style="{StaticResource Icon}" FontSize="13"/><TextBlock Text="Compare" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                                <Button x:Name="ObjDocs" Style="{StaticResource ToolBtn}">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" FontSize="13"/><TextBlock Text="Document" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                                <Rectangle Width="1" Fill="{DynamicResource Line}" Margin="4,4"/>
+                                <Button x:Name="ObjDelete" Style="{StaticResource ToolBtn}">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74D;" Style="{StaticResource Icon}" FontSize="13" Foreground="{DynamicResource Danger}"/><TextBlock Text="Delete" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <Grid HorizontalAlignment="Right" Width="260">
+                                <TextBox x:Name="ObjSearch" Padding="30,6,8,6"/>
+                                <TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="10,0,0,0" IsHitTestVisible="False"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="2" Style="{StaticResource Card}" Padding="0">
+                        <Grid>
+                            <DataGrid x:Name="ObjectGrid" Margin="4">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Width="40" CanUserResize="False">
+                                        <DataGridTemplateColumn.Header>
+                                            <CheckBox x:Name="ObjSelectAll" ToolTip="Select all"/>
+                                        </DataGridTemplateColumn.Header>
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Type" Binding="{Binding Kind}" Width="*" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Platform" Binding="{Binding Platform}" Width="110" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Assigned" Binding="{Binding Assigned}" Width="80" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Modified" Binding="{Binding Modified}" Width="140" IsReadOnly="True"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel x:Name="ObjEmpty" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
+                                <TextBlock Text="&#xE8B7;" Style="{StaticResource Icon}" FontSize="34" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="ObjEmptyText" Text="No objects" Foreground="{DynamicResource Muted}" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <ProgressBar x:Name="ObjLoading" IsIndeterminate="True" VerticalAlignment="Top" Height="3" Margin="10,2" Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+                    <!-- Detail pane -->
+                    <Border x:Name="DetailPane" Grid.Row="2" Grid.Column="1" Width="420" Margin="12,0,0,0" Style="{StaticResource Card}" Padding="0" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Margin="16,14,8,6">
+                                <StackPanel Margin="0,0,40,0">
+                                    <TextBlock x:Name="DetailTitle" Style="{StaticResource H2}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="DetailSub" Style="{StaticResource Hint}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button x:Name="DetailClose" Style="{StaticResource SubtleBtn}" HorizontalAlignment="Right" VerticalAlignment="Top" Content="&#xE8BB;" FontFamily="{StaticResource IconFont}" FontSize="10"/>
+                            </Grid>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,0,10,8">
+                                <Button x:Name="DetailCopyJson" Style="{StaticResource ToolBtn}" Content="Copy JSON"/>
+                                <Button x:Name="DetailSaveJson" Style="{StaticResource ToolBtn}" Content="Save as..."/>
+                                <Button x:Name="DetailPortal" Style="{StaticResource ToolBtn}" Content="Open portal"/>
+                            </StackPanel>
+                            <TextBox x:Name="DetailJson" Grid.Row="2" IsReadOnly="True" FontFamily="{StaticResource MonoFont}" FontSize="12" BorderThickness="0,1,0,0" Background="Transparent"
+                                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap" AcceptsReturn="True" Padding="14,10"/>
+                            <ProgressBar x:Name="DetailLoading" Grid.Row="2" IsIndeterminate="True" VerticalAlignment="Top" Height="3" Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Overlay host for dialogs (panels are loaded from UI\Panels) -->
+                <Grid x:Name="OverlayHost" Visibility="Collapsed">
+                    <Rectangle Fill="{DynamicResource Backdrop}"/>
+                    <ContentControl x:Name="OverlayContent" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30"/>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ===== Progress bar for running operation ===== -->
+        <Border x:Name="OpBar" Grid.Row="2" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="16,10" Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <Grid>
+                        <TextBlock x:Name="OpStatus" Text="Working..." FontWeight="SemiBold"/>
+                        <TextBlock x:Name="OpCount" HorizontalAlignment="Right" Foreground="{DynamicResource Muted}"/>
+                    </Grid>
+                    <TextBlock x:Name="OpItem" Foreground="{DynamicResource Muted}" FontSize="12" Margin="0,2,0,6" TextTrimming="CharacterEllipsis"/>
+                    <ProgressBar x:Name="OpProgress" Minimum="0" Maximum="100"/>
+                </StackPanel>
+                <Button x:Name="OpCancel" Grid.Column="1" Content="Cancel" Margin="16,0,0,0" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== Log panel ===== -->
+        <Border x:Name="LogPanel" Grid.Row="3" Height="210" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid Margin="12,6,8,2">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Activity log" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Border Style="{StaticResource SegmentHost}" Margin="14,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="LogAll" Content="All" Style="{StaticResource Segment}" GroupName="lf" IsChecked="True"/>
+                                <RadioButton x:Name="LogWarn" Content="Warnings" Style="{StaticResource Segment}" GroupName="lf"/>
+                                <RadioButton x:Name="LogErr" Content="Errors" Style="{StaticResource Segment}" GroupName="lf"/>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock x:Name="LogCounts" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Muted}" FontSize="12"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="LogCopy" Style="{StaticResource ToolBtn}" Content="Copy" ToolTip="Copy selected entries"/>
+                        <Button x:Name="LogClear" Style="{StaticResource ToolBtn}" Content="Clear"/>
+                        <Button x:Name="LogOpen" Style="{StaticResource ToolBtn}" Content="Open log folder"/>
+                    </StackPanel>
+                </Grid>
+                <DataGrid x:Name="LogGrid" Grid.Row="1" IsReadOnly="True" RowHeight="24" FontSize="12" GridLinesVisibility="None" Margin="4,0,4,4">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="28">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock x:Name="g" Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Info}"/>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Level}" Value="Warning"><Setter TargetName="g" Property="Foreground" Value="{DynamicResource Warning}"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Level}" Value="Error"><Setter TargetName="g" Property="Foreground" Value="{DynamicResource Danger}"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Level}" Value="Critical"><Setter TargetName="g" Property="Foreground" Value="{DynamicResource Danger}"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Level}" Value="Success"><Setter TargetName="g" Property="Foreground" Value="{DynamicResource Success}"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Level}" Value="Debug"><Setter TargetName="g" Property="Foreground" Value="{DynamicResource Muted}"/></DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="80"/>
+                        <DataGridTextColumn Header="Area" Binding="{Binding Category}" Width="100"/>
+                        <DataGridTemplateColumn Header="Message" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Message}" ToolTip="{Binding Detail}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- ===== Status bar ===== -->
+        <Grid Grid.Row="4" Background="{DynamicResource Surface}">
+            <TextBlock x:Name="StatusText" Margin="14,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Muted}" Text="Ready"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock x:Name="StatusWarnings" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Warning}" Margin="0,0,12,0"/>
+                <TextBlock x:Name="StatusErrors" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Danger}" Margin="0,0,12,0"/>
+                <Button x:Name="LogToggle" Style="{StaticResource SubtleBtn}" Padding="10,2" FontSize="12" Content="Hide log"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ===== Toast ===== -->
+        <Border x:Name="Toast" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,24" MaxWidth="440"
+                Style="{StaticResource Dialog}" Padding="16,12" Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="ToastIcon" Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="18" Foreground="{DynamicResource Success}" VerticalAlignment="Top" Margin="0,2,12,0"/>
+                <StackPanel Grid.Column="1">
+                    <TextBlock x:Name="ToastTitle" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="ToastText" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+                    <Button x:Name="ToastAction" Style="{StaticResource SubtleBtn}" HorizontalAlignment="Left" Margin="-10,4,0,-6" Foreground="{DynamicResource Accent}" Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

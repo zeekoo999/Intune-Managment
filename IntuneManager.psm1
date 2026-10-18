@@ -5,14 +5,30 @@
 #>
 
 $script:IMModuleRoot = $PSScriptRoot
+
+# Every file the module needs. Checked up front so a missing file gives a clear message
+# instead of "The term '...' is not recognized".
 $coreFiles = @('Common', 'Logging', 'Settings', 'Graph', 'Auth', 'ObjectTypes', 'Handlers', 'Migration', 'Export', 'Import', 'AppContent', 'Compare', 'Operations', 'Documentation')
-foreach ($f in $coreFiles) {
-    $p = Join-Path $PSScriptRoot "Core/$f.ps1"
-    if (Test-Path -LiteralPath $p) { . $p }
+$required = @($coreFiles | ForEach-Object { "Core/$_.ps1" }) + @(
+    'Core/Native.cs', 'UI/App.ps1', 'UI/Theme.xaml', 'UI/MainWindow.xaml',
+    'UI/Panels/ConnectPanel.xaml', 'UI/Panels/ExportPanel.xaml', 'UI/Panels/ImportPanel.xaml', 'UI/Panels/ComparePanel.xaml',
+    'UI/Panels/DocsPanel.xaml', 'UI/Panels/SettingsPanel.xaml', 'UI/Panels/ConfirmPanel.xaml'
+)
+$missing = @($required | Where-Object { -not [IO.File]::Exists((Join-Path $PSScriptRoot $_)) })
+if ($missing.Count) {
+    throw ("IntuneManager is incomplete. These files are missing from '$PSScriptRoot':`n  " + ($missing -join "`n  ") +
+        "`n`nLikely causes: the zip was not fully extracted (use 'Extract All' instead of opening the zip), a folder was not uploaded or copied, " +
+        "or antivirus removed a file (check Windows Security > Protection history). Download and extract the package again.")
 }
 
-# Desktop UI (functions only; WPF assemblies are loaded when Show-IMApp runs)
-. (Join-Path $PSScriptRoot 'UI/App.ps1')
+# Load the source files. If the folder path contains [ ] (wildcards to PowerShell), dot-sourcing by path
+# fails, so the file is read and dot-sourced as a scriptblock instead.
+$wildcardPath = [Management.Automation.WildcardPattern]::ContainsWildcardCharacters($PSScriptRoot)
+foreach ($rel in @($coreFiles | ForEach-Object { "Core/$_.ps1" }) + 'UI/App.ps1') {
+    $full = Join-Path $PSScriptRoot $rel
+    if ($wildcardPath) { . ([scriptblock]::Create([IO.File]::ReadAllText($full))) }
+    else { . $full }   # normal dot-sourcing keeps file names and line numbers in error logs
+}
 
 Import-IMSettings | Out-Null
 Initialize-IMObjectTypes
